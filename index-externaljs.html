@@ -69,9 +69,7 @@
       }
     }
 
-    drawFrequencyBars(analyser, dataArray, bufferLength);
-
-    drawRadial(analyser, dataArray, bufferLength);
+    visualizationModules[visualizationSelect.value](analyser, dataArray, bufferLength);
 
     async function startAudio() {
       try {
