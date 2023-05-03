@@ -33,7 +33,7 @@
         textSize(32);
         textAlign(CENTER, CENTER);
         fill(255);
-        text('Click to enable audio', width / 2, height / 2);
+        text('Click or touch to enable audio', width / 2, height / 2);
       }
     }
 
@@ -43,7 +43,7 @@
       mic.enabled = true;
     }
 
-    function mouseClicked() {
+    function touchStarted() {
       if (!mic.enabled) {
         startAudio();
       }
