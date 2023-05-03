@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Psychedelic Music Visualizer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+  <script>
+    let mic;
+    let amplitude;
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      mic = new p5.AudioIn();
+      amplitude = new p5.Amplitude();
+    }
+
+    function draw() {
+      background(0);
+
+      if (mic.enabled) {
+        let level = amplitude.getLevel();
+        let size = map(level, 0, 1, 0, width);
+        fill(255, 255, 255);
+        ellipse(width / 2, height / 2, size, size);
+      } else {
+        textSize(32);
+        textAlign(CENTER, CENTER);
+        fill(255);
+        text('Click to enable audio', width / 2, height / 2);
+      }
+    }
+
+    function mouseClicked() {
+      if (!mic.enabled) {
+        mic.start();
+        mic.enabled = true;
+        amplitude.setInput(mic);
+      }
+    }
+  </script>
+</body>
+</html>
