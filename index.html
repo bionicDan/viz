@@ -8,43 +8,56 @@
 </head>
 <body>
   <script>
-    let mic;
-    let fft;
+    let audioContext;
+    let analyser;
+    let micStream;
+    let dataArray;
+    let bufferLength;
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
-      mic = new p5.AudioIn();
-      fft = new p5.FFT();
+      textAlign(CENTER, CENTER);
     }
 
     function draw() {
       background(0);
 
-      if (mic.enabled) {
-        fft.setInput(mic);
-        let spectrum = fft.analyze();
-        for (let i = 0; i < spectrum.length; i++) {
-          let x = map(i, 0, spectrum.length, 0, width);
-          let h = -height + map(spectrum[i], 0, 255, height, 0);
-          fill(255, i % 255, 255);
-          rect(x, height, width / spectrum.length, h);
+      if (analyser) {
+        analyser.getByteFrequencyData(dataArray);
+
+        const barWidth = (width / bufferLength) * 2.5;
+        let barHeight;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+          barHeight = dataArray[i] / 2;
+          fill(barHeight + 100, i % 255, 255);
+          rect(x, height - barHeight / 2, barWidth, barHeight);
+          x += barWidth + 1;
         }
       } else {
         textSize(32);
-        textAlign(CENTER, CENTER);
         fill(255);
         text('Click or touch to enable audio', width / 2, height / 2);
       }
     }
 
     async function startAudio() {
-      await userStartAudio();
-      mic.start();
-      mic.enabled = true;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        micStream = audioContext.createMediaStreamSource(stream);
+        micStream.connect(analyser);
+        bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+      } catch (err) {
+        console.error('Error accessing microphone: ', err);
+      }
     }
 
     function touchStarted() {
-      if (!mic.enabled) {
+      if (!micStream) {
         startAudio();
       }
     }
