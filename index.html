@@ -14,30 +14,67 @@
   </style>
 </head>
 <body>
-  <select id="visualization-select"></select>
+  <select id="visualization-select">
+    <option value="frequency-bars">Frequency Bars</option>
+    <option value="radial">Radial</option>
+  </select>
   <script type="module">
-    import { visualizations } from "./visualizationConfig.js";
+    import { drawFrequencyBars } from './frequencyBars.js';
+    import { drawRadial } from './radial.js';
 
-    const visualizationSelect = document.getElementById("visualization-select");
+    let audioContext;
+    let analyser;
+    let micStream;
+    let dataArray;
+    let bufferLength;
+    let visualizationSelect;
 
-    const visualizationModules = {};
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      visualizationSelect = document.getElementById('visualization-select');
+    }
 
-    async function loadVisualizations() {
-      for (const viz of visualizations) {
-        const vizModule = await import(viz.file);
-        visualizationModules[viz.function] = vizModule[viz.function];
-        const option = document.createElement("option");
-        option.value = viz.function;
-        option.textContent = viz.name;
-        visualizationSelect.appendChild(option);
+    function draw() {
+      background(0);
+
+      if (analyser) {
+        analyser.getByteFrequencyData(dataArray);
+
+        if (visualizationSelect.value === 'frequency-bars') {
+          drawFrequencyBars();
+        } else if (visualizationSelect.value === 'radial') {
+          drawRadial();
+        }
+      } else {
+        textSize(32);
+        textAlign(CENTER, CENTER);
+        fill(255);
+        text('Click or touch to enable audio', width / 2, height / 2);
       }
     }
 
-    loadVisualizations();
+    drawFrequencyBars(analyser, dataArray, bufferLength);
 
-    // ... (rest of your main script)
-    // Replace the drawFrequencyBars() and drawRadial() calls in the draw() function with:
-    // visualizationModules[visualizationSelect.value](analyser, dataArray, bufferLength);
+    drawRadial(analyser, dataArray, bufferLength);
+
+    async function startAudio() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        micStream = audioContext.createMediaStreamSource(stream);
+        micStream.connect(analyser);
+        bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+      } catch (err) {
+        console.error('Error accessing microphone: ', err);
+      }
+    }
+
+    function touchStarted() {
+      if (!micStream) {
+        startAudio();
+      }
+    }
   </script>
-</body>
-</html>
+</body
