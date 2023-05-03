@@ -13,20 +13,27 @@
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
+      mic = new p5.AudioIn();
       fft = new p5.FFT();
     }
 
     function draw() {
       background(0);
 
-      if (mic && mic.enabled) {
-        let spectrum = fft.analyze();
-        for (let i = 0; i < spectrum.length; i++) {
-          let x = map(i, 0, spectrum.length, 0, width);
-          let h = -height + map(spectrum[i], 0, 255, height, 0);
-          fill(255, i % 255, 255);
-          rect(x, height, width / spectrum.length, h);
+      if (mic.enabled) {
+        fft.setInput(mic);
+        let waveform = fft.waveform();
+        noFill();
+        beginShape();
+        stroke(255);
+
+        for (let i = 0; i < waveform.length; i++) {
+          let x = map(i, 0, waveform.length, 0, width);
+          let y = map(waveform[i], -1, 1, 0, height);
+          vertex(x, y);
         }
+
+        endShape();
       } else {
         textSize(32);
         textAlign(CENTER, CENTER);
@@ -35,21 +42,10 @@
       }
     }
 
-    async function getMicrophoneAccess() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const audioContext = getAudioContext();
-        const source = audioContext.createMediaStreamSource(stream);
-        fft.setInput(source);
-        mic = { enabled: true };
-      } catch (err) {
-        console.error('Error accessing microphone: ', err);
-      }
-    }
-
     function mouseClicked() {
-      if (!mic || !mic.enabled) {
-        getMicrophoneAccess();
+      if (!mic.enabled) {
+        mic.start();
+        mic.enabled = true;
       }
     }
   </script>
