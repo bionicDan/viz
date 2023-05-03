@@ -14,93 +14,30 @@
   </style>
 </head>
 <body>
-  <select id="visualization-select">
-    <option value="frequency-bars">Frequency Bars</option>
-    <option value="radial">Radial</option>
-  </select>
-  <script>
-    let audioContext;
-    let analyser;
-    let micStream;
-    let dataArray;
-    let bufferLength;
-    let visualizationSelect;
+  <select id="visualization-select"></select>
+  <script type="module">
+    import { visualizations } from "./visualizationConfig.js";
 
-    function setup() {
-      createCanvas(windowWidth, windowHeight);
-      visualizationSelect = document.getElementById('visualization-select');
-    }
+    const visualizationSelect = document.getElementById("visualization-select");
 
-    function draw() {
-      background(0);
+    const visualizationModules = {};
 
-      if (analyser) {
-        analyser.getByteFrequencyData(dataArray);
-
-        if (visualizationSelect.value === 'frequency-bars') {
-          drawFrequencyBars();
-        } else if (visualizationSelect.value === 'radial') {
-          drawRadial();
-        }
-      } else {
-        textSize(32);
-        textAlign(CENTER, CENTER);
-        fill(255);
-        text('Click or touch to enable audio', width / 2, height / 2);
+    async function loadVisualizations() {
+      for (const viz of visualizations) {
+        const vizModule = await import(viz.file);
+        visualizationModules[viz.function] = vizModule[viz.function];
+        const option = document.createElement("option");
+        option.value = viz.function;
+        option.textContent = viz.name;
+        visualizationSelect.appendChild(option);
       }
     }
 
-    function drawFrequencyBars() {
-      const barWidth = (width / bufferLength) * 2.5;
-      let barHeight;
-      let x = 0;
+    loadVisualizations();
 
-      for (let i = 0; i < bufferLength; i++) {
-        barHeight = dataArray[i] / 2;
-        fill(barHeight + 100, i % 255, 255);
-        rect(x, height - barHeight / 2, barWidth, barHeight);
-        x += barWidth + 1;
-      }
-    }
-
-    function drawRadial() {
-      const numPoints = bufferLength / 4;
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const maxRadius = min(width, height) / 2;
-      const angleStep = TWO_PI / numPoints;
-
-      push();
-      translate(centerX, centerY);
-      for (let i = 0; i < numPoints; i++) {
-        const angle = i * angleStep;
-        const radius = map(dataArray[i], 0, 255, 0, maxRadius);
-        const x = radius * cos(angle);
-        const y = radius * sin(angle);
-        fill(dataArray[i] + 100, i % 255, 255);
-        ellipse(x, y, 10, 10);
-      }
-      pop();
-    }
-
-    async function startAudio() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        micStream = audioContext.createMediaStreamSource(stream);
-        micStream.connect(analyser);
-        bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
-      } catch (err) {
-        console.error('Error accessing microphone: ', err);
-      }
-    }
-
-    function touchStarted() {
-      if (!micStream) {
-        startAudio();
-      }
-    }
+    // ... (rest of your main script)
+    // Replace the drawFrequencyBars() and drawRadial() calls in the draw() function with:
+    // visualizationModules[visualizationSelect.value](analyser, dataArray, bufferLength);
   </script>
-</body
+</body>
+</html>
