@@ -41,9 +41,9 @@
         analyser.getByteFrequencyData(dataArray);
 
         if (visualizationSelect.value === 'frequency-bars') {
-          drawFrequencyBars();
+          drawFrequencyBars(analyser, dataArray, bufferLength);
         } else if (visualizationSelect.value === 'radial') {
-          drawRadial();
+          drawRadial(analyser, dataArray, bufferLength);
         }
       } else {
         textSize(32);
@@ -52,10 +52,6 @@
         text('Click or touch to enable audio', width / 2, height / 2);
       }
     }
-
-    drawFrequencyBars(analyser, dataArray, bufferLength);
-
-    drawRadial(analyser, dataArray, bufferLength);
 
     async function startAudio() {
       try {
