@@ -13,7 +13,6 @@
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
-      getMicrophoneAccess();
       fft = new p5.FFT();
     }
 
@@ -39,9 +38,10 @@
     async function getMicrophoneAccess() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mic = new p5.MediaElement(stream);
-        mic.enabled = true;
-        fft.setInput(mic);
+        const audioContext = getAudioContext();
+        const source = audioContext.createMediaStreamSource(stream);
+        fft.setInput(source);
+        mic = { enabled: true };
       } catch (err) {
         console.error('Error accessing microphone: ', err);
       }
