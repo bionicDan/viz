@@ -22,18 +22,13 @@
 
       if (mic.enabled) {
         fft.setInput(mic);
-        let waveform = fft.waveform();
-        noFill();
-        beginShape();
-        stroke(255);
-
-        for (let i = 0; i < waveform.length; i++) {
-          let x = map(i, 0, waveform.length, 0, width);
-          let y = map(waveform[i], -1, 1, 0, height);
-          vertex(x, y);
+        let spectrum = fft.analyze();
+        for (let i = 0; i < spectrum.length; i++) {
+          let x = map(i, 0, spectrum.length, 0, width);
+          let h = -height + map(spectrum[i], 0, 255, height, 0);
+          fill(255, i % 255, 255);
+          rect(x, height, width / spectrum.length, h);
         }
-
-        endShape();
       } else {
         textSize(32);
         textAlign(CENTER, CENTER);
@@ -42,10 +37,15 @@
       }
     }
 
+    async function startAudio() {
+      await userStartAudio();
+      mic.start();
+      mic.enabled = true;
+    }
+
     function mouseClicked() {
       if (!mic.enabled) {
-        mic.start();
-        mic.enabled = true;
+        startAudio();
       }
     }
   </script>
