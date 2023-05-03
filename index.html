@@ -5,17 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Psychedelic Music Visualizer</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <style>
+    #visualization-select {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+    }
+  </style>
 </head>
 <body>
+  <select id="visualization-select">
+    <option value="frequency-bars">Frequency Bars</option>
+    <option value="radial">Radial</option>
+  </select>
   <script>
     let audioContext;
     let analyser;
     let micStream;
     let dataArray;
     let bufferLength;
+    let visualizationSelect;
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
+      visualizationSelect = document.getElementById('visualization-select');
     }
 
     function draw() {
@@ -24,15 +37,10 @@
       if (analyser) {
         analyser.getByteFrequencyData(dataArray);
 
-        const barWidth = (width / bufferLength) * 2.5;
-        let barHeight;
-        let x = 0;
-
-        for (let i = 0; i < bufferLength; i++) {
-          barHeight = dataArray[i] / 2;
-          fill(barHeight + 100, i % 255, 255);
-          rect(x, height - barHeight / 2, barWidth, barHeight);
-          x += barWidth + 1;
+        if (visualizationSelect.value === 'frequency-bars') {
+          drawFrequencyBars();
+        } else if (visualizationSelect.value === 'radial') {
+          drawRadial();
         }
       } else {
         textSize(32);
@@ -40,6 +48,39 @@
         fill(255);
         text('Click or touch to enable audio', width / 2, height / 2);
       }
+    }
+
+    function drawFrequencyBars() {
+      const barWidth = (width / bufferLength) * 2.5;
+      let barHeight;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i] / 2;
+        fill(barHeight + 100, i % 255, 255);
+        rect(x, height - barHeight / 2, barWidth, barHeight);
+        x += barWidth + 1;
+      }
+    }
+
+    function drawRadial() {
+      const numPoints = bufferLength / 4;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const maxRadius = min(width, height) / 2;
+      const angleStep = TWO_PI / numPoints;
+
+      push();
+      translate(centerX, centerY);
+      for (let i = 0; i < numPoints; i++) {
+        const angle = i * angleStep;
+        const radius = map(dataArray[i], 0, 255, 0, maxRadius);
+        const x = radius * cos(angle);
+        const y = radius * sin(angle);
+        fill(dataArray[i] + 100, i % 255, 255);
+        ellipse(x, y, 10, 10);
+      }
+      pop();
     }
 
     async function startAudio() {
@@ -62,5 +103,4 @@
       }
     }
   </script>
-</body>
-</html>
+</body
